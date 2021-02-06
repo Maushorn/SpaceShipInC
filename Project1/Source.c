@@ -21,7 +21,7 @@ float fFovRad;
 Mat4x4 matProj = { 0 };
 Mat4x4 matRotZ = { 0 };
 Mat4x4 matRotX = { 0 };
-
+Vec3d cameraPosition = { 0 };
 
 Mesh* meshCube;
 float fTheta = 0.0f;
@@ -93,39 +93,67 @@ void Draw(SDL_Renderer* renderer) {
 
 		//Translate because otherwise the camera is inside the Cube
 		Triangle translatedTriangle = rotatedXTriangle;
-		translatedTriangle.p[0].z = rotatedXTriangle.p[0].z + 5.0f;
-		translatedTriangle.p[1].z = rotatedXTriangle.p[1].z + 5.0f;
-		translatedTriangle.p[2].z = rotatedXTriangle.p[2].z + 5.0f;
+		translatedTriangle.p[0].z = rotatedXTriangle.p[0].z + 3.0f;
+		translatedTriangle.p[1].z = rotatedXTriangle.p[1].z + 3.0f;
+		translatedTriangle.p[2].z = rotatedXTriangle.p[2].z + 3.0f;
 
-		//Project Triangle
-		MultiplyMatrixVector(&(translatedTriangle.p[0]), &(projectedTriangle.p[0]), &matProj);
-		MultiplyMatrixVector(&(translatedTriangle.p[1]), &(projectedTriangle.p[1]), &matProj);
-		MultiplyMatrixVector(&(translatedTriangle.p[2]), &(projectedTriangle.p[2]), &matProj);
+		//Calculating the normal vector (cross product).
+		Vec3d vectorA = {
+			.x = translatedTriangle.p[1].x - translatedTriangle.p[0].x,
+			.y = translatedTriangle.p[1].y - translatedTriangle.p[0].y,
+			.z = translatedTriangle.p[1].z - translatedTriangle.p[0].z
+		};
+		Vec3d vectorB = {
+			.x = translatedTriangle.p[2].x - translatedTriangle.p[0].x,
+			.y = translatedTriangle.p[2].y - translatedTriangle.p[0].y,
+			.z = translatedTriangle.p[2].z - translatedTriangle.p[0].z
+		};
+		Vec3d normalVector = {
+			.x = vectorA.y * vectorB.z - vectorA.z * vectorB.y,
+			.y = vectorA.z * vectorB.x - vectorA.x * vectorB.z,
+			.z = vectorA.x * vectorB.y - vectorA.y * vectorB.x
+		};
+		//normalize normalVector
+		float normalizeFactor = sqrtf(normalVector.x * normalVector.x + normalVector.y * normalVector.y + normalVector.z * normalVector.z);
+		normalVector.x /= normalizeFactor;
+		normalVector.x /= normalizeFactor;
+		normalVector.x /= normalizeFactor;
 
-		//Scale into view
-		projectedTriangle.p[0].x += 1.0f; projectedTriangle.p[0].y += 1.0f;
-		projectedTriangle.p[1].x += 1.0f; projectedTriangle.p[1].y += 1.0f;
-		projectedTriangle.p[2].x += 1.0f; projectedTriangle.p[2].y += 1.0f;
+		Vec3d lookVector = {
+			.x = translatedTriangle.p[0].x - cameraPosition.x,
+			.y = translatedTriangle.p[0].y - cameraPosition.y,
+			.z = translatedTriangle.p[0].z - cameraPosition.z
+		};
+		//normalize again
+		float normalizeFactor2 = sqrtf(lookVector.x * lookVector.x + lookVector.y * lookVector.y + lookVector.z * lookVector.z);
+		lookVector.x /= normalizeFactor2;
+		lookVector.y /= normalizeFactor2;
+		lookVector.z /= normalizeFactor2;
 
-		projectedTriangle.p[0].x *= (0.5f * (float)width);
-		projectedTriangle.p[0].y *= (0.5f * (float)height);
-		projectedTriangle.p[1].x *= (0.5f * (float)width);
-		projectedTriangle.p[1].y *= (0.5f * (float)height);
-		projectedTriangle.p[2].x *= (0.5f * (float)width);
-		projectedTriangle.p[2].y *= (0.5f * (float)height);
+		if ((normalVector.x * lookVector.x + normalVector.y * lookVector.y + normalVector.z * lookVector.z) < 0) {
+			//Project Triangle - Projection Space
+			MultiplyMatrixVector(&(translatedTriangle.p[0]), &(projectedTriangle.p[0]), &matProj);
+			MultiplyMatrixVector(&(translatedTriangle.p[1]), &(projectedTriangle.p[1]), &matProj);
+			MultiplyMatrixVector(&(translatedTriangle.p[2]), &(projectedTriangle.p[2]), &matProj);
 
-		//Draw Triangles
-		SDL_RenderDrawLine(renderer, projectedTriangle.p[0].x, projectedTriangle.p[0].y, projectedTriangle.p[1].x, projectedTriangle.p[1].y);
-		SDL_RenderDrawLine(renderer, projectedTriangle.p[1].x, projectedTriangle.p[1].y, projectedTriangle.p[2].x, projectedTriangle.p[2].y);
-		SDL_RenderDrawLine(renderer, projectedTriangle.p[2].x, projectedTriangle.p[2].y, projectedTriangle.p[0].x, projectedTriangle.p[0].y);
+			//Scale into view
+			projectedTriangle.p[0].x += 1.0f; projectedTriangle.p[0].y += 1.0f;
+			projectedTriangle.p[1].x += 1.0f; projectedTriangle.p[1].y += 1.0f;
+			projectedTriangle.p[2].x += 1.0f; projectedTriangle.p[2].y += 1.0f;
+
+			projectedTriangle.p[0].x *= (0.5f * (float)width);
+			projectedTriangle.p[0].y *= (0.5f * (float)height);
+			projectedTriangle.p[1].x *= (0.5f * (float)width);
+			projectedTriangle.p[1].y *= (0.5f * (float)height);
+			projectedTriangle.p[2].x *= (0.5f * (float)width);
+			projectedTriangle.p[2].y *= (0.5f * (float)height);
+
+			//Draw Triangles
+			SDL_RenderDrawLine(renderer, projectedTriangle.p[0].x, projectedTriangle.p[0].y, projectedTriangle.p[1].x, projectedTriangle.p[1].y);
+			SDL_RenderDrawLine(renderer, projectedTriangle.p[1].x, projectedTriangle.p[1].y, projectedTriangle.p[2].x, projectedTriangle.p[2].y);
+			SDL_RenderDrawLine(renderer, projectedTriangle.p[2].x, projectedTriangle.p[2].y, projectedTriangle.p[0].x, projectedTriangle.p[0].y);
+		}
 	}
-
-
-
-
-	SDL_RenderDrawLine(renderer, projectedTriangle.p[0].x, projectedTriangle.p[0].y, projectedTriangle.p[1].x, projectedTriangle.p[1].y);
-	SDL_RenderDrawLine(renderer, projectedTriangle.p[1].x, projectedTriangle.p[1].y, projectedTriangle.p[2].x, projectedTriangle.p[2].y);
-	SDL_RenderDrawLine(renderer, projectedTriangle.p[2].x, projectedTriangle.p[2].y, projectedTriangle.p[0].x, projectedTriangle.p[0].y);
 
 	SDL_RenderPresent(renderer);
 
@@ -157,8 +185,6 @@ int main(void) {
 				currentNumberOfTicks = SDL_GetTicks();
 				delta = currentNumberOfTicks - lastNumberOfTicks;
 				lastNumberOfTicks = currentNumberOfTicks;
-				printf("%d\n", (int)delta);
-
 
 				Update(delta);
 
