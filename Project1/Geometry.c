@@ -2,7 +2,6 @@
 #include<stdio.h>
 #include "Geometry.h"
 
-
 Mesh* GetExampleMeshCube() {
 
 	Mesh* meshCube = malloc(sizeof(Mesh));

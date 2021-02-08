@@ -1,10 +1,14 @@
-#include<stdlib.h>
-#include<stdio.h>
-#include<SDL.h>
-#include<SDL_render.h>
-#include<SDL_video.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <SDL.h>
+#include <SDL_render.h>
+#include <SDL_video.h>
 #include<math.h>
 #include"Geometry.h"
+#include "Triangle.h"
+
+//#include "olcPixelGameEngine.h"
+
 
 int width = 1920;
 int height = 1080;
@@ -35,6 +39,104 @@ void AddMesh(Mesh* mesh) {
 	meshCount++;
 }
 
+
+//Something is still wrong in this function
+/*
+void FillTriangle(SDL_Renderer* renderer, Triangle* triangle) {
+
+	Line2D line[3];
+	line[0].p[0].x = triangle->p[0].x;
+	line[0].p[0].y = triangle->p[0].y;
+	line[0].p[1].x = triangle->p[1].x;
+	line[0].p[1].y = triangle->p[1].y;
+
+	line[1].p[0].x = triangle->p[1].x;
+	line[1].p[0].y = triangle->p[1].y;
+	line[1].p[1].x = triangle->p[2].x;
+	line[1].p[1].y = triangle->p[2].y;
+
+	line[2].p[0].x = triangle->p[0].x;
+	line[2].p[0].y = triangle->p[0].y;
+	line[2].p[1].x = triangle->p[2].x;
+	line[2].p[1].y = triangle->p[2].y;
+
+	float k[3];
+	float d[3];
+	for (size_t i = 0; i < 3; i++)
+	{
+		if (line[i].p[1].x == line[i].p[0].x || line[i].p[1].y == line[i].p[0].y)
+			return;
+		//Order points according to y-Value
+		if (line[i].p[0].y > line[i].p[1].y) {
+			Vec2d tmp = line[i].p[0];
+			line[i].p[0] = line[i].p[1];
+			line[i].p[1] = tmp;
+		}
+		else if (line[i].p[0].y == line[i].p[1].y) {
+			if (line[i].p[0].x > line[i].p[1].x) {
+				Vec2d tmp = line[i].p[0];
+				line[i].p[0] = line[i].p[1];
+				line[i].p[1] = tmp;
+			}
+
+		}
+
+		k[i] = (line[i].p[1].y - line[i].p[0].y) / (line[i].p[1].x - line[i].p[0].x);
+		d[i] = line[i].p->y - k[i] * line[i].p->x;
+	}
+
+
+	int mostYLine = 0;
+	if (fabsf(line[0].p[0].y - line[0].p[1].y) < fabsf(line[1].p[0].y - line[1].p[1].y))
+		mostYLine = 1;
+	if ((fabsf(line[0].p[0].y - line[0].p[1].y) < fabsf(line[2].p[0].y - line[2].p[1].y)) &&
+		(fabsf(line[1].p[0].y - line[1].p[1].y) < fabsf(line[2].p[0].y - line[2].p[1].y)))
+		mostYLine = 2;
+
+		//TODO control this. What if two points have the same height?
+	float highestPoint = line[mostYLine].p[0].y;
+	float lowestPoint = line[mostYLine].p[1].y;
+
+	int upperYLine = 0;
+	int lowerYLine = 0;
+	for (size_t i = 0; i < 3; i++)
+	{
+		if (i != mostYLine) {
+			if (line[i].p[0].y == highestPoint)
+				upperYLine = i;
+			//else
+				//lowerYLine = i;
+		}
+	}
+	while (lowerYLine == mostYLine || lowerYLine == upperYLine) {
+		lowerYLine++;
+	}
+	float border = fmaxf(line[upperYLine].p[0].y, line[upperYLine].p[1].y);
+	int otherline;
+	//Fill between the line with the biggest y area and the other lines;
+	for (size_t i = highestPoint; i <= lowestPoint; i++)
+	{
+		if (i <= border)
+			otherline = upperYLine;
+		else
+			otherline = lowerYLine;
+
+		float x1 = (i - d[mostYLine]) * ((line[mostYLine].p[0].x - line[mostYLine].p[1].x) / (line[mostYLine].p[0].y - line[mostYLine].p[1].y));
+		float x2 = (i - d[otherline]) * ((line[otherline].p[0].x - line[otherline].p[1].x) / (line[otherline].p[0].y - line[otherline].p[1].y));
+
+		if (x1 != x2)
+			SDL_RenderDrawLine(renderer, x1, i, x2, i);
+	}
+
+}
+*/
+//SDL_RenderDrawLine();
+
+
+
+
+
+
 void Load(void) {
 	fAspectRatio = ((float)height) / ((float)width);
 	fFovRad = 1.0f / tanf(fFov * 0.5f);
@@ -51,7 +153,7 @@ void Load(void) {
 
 }
 
-void Update(Uint32 delta) {
+void Update(int delta) {
 	fTheta += 0.001f * (float)delta;
 
 	//Set z-Rotation Matrix
@@ -98,32 +200,32 @@ void Draw(SDL_Renderer* renderer) {
 		translatedTriangle.p[2].z = rotatedXTriangle.p[2].z + 3.0f;
 
 		//Calculating the normal vector (cross product).
-		Vec3d vectorA = {
-			.x = translatedTriangle.p[1].x - translatedTriangle.p[0].x,
-			.y = translatedTriangle.p[1].y - translatedTriangle.p[0].y,
-			.z = translatedTriangle.p[1].z - translatedTriangle.p[0].z
-		};
-		Vec3d vectorB = {
-			.x = translatedTriangle.p[2].x - translatedTriangle.p[0].x,
-			.y = translatedTriangle.p[2].y - translatedTriangle.p[0].y,
-			.z = translatedTriangle.p[2].z - translatedTriangle.p[0].z
-		};
-		Vec3d normalVector = {
-			.x = vectorA.y * vectorB.z - vectorA.z * vectorB.y,
-			.y = vectorA.z * vectorB.x - vectorA.x * vectorB.z,
-			.z = vectorA.x * vectorB.y - vectorA.y * vectorB.x
-		};
+		Vec3d vectorA;
+		vectorA.x = translatedTriangle.p[1].x - translatedTriangle.p[0].x;
+		vectorA.y = translatedTriangle.p[1].y - translatedTriangle.p[0].y;
+		vectorA.z = translatedTriangle.p[1].z - translatedTriangle.p[0].z;
+
+		Vec3d vectorB;
+		vectorB.x = translatedTriangle.p[2].x - translatedTriangle.p[0].x;
+		vectorB.y = translatedTriangle.p[2].y - translatedTriangle.p[0].y;
+		vectorB.z = translatedTriangle.p[2].z - translatedTriangle.p[0].z;
+
+		Vec3d normalVector;
+		normalVector.x = vectorA.y * vectorB.z - vectorA.z * vectorB.y;
+		normalVector.y = vectorA.z * vectorB.x - vectorA.x * vectorB.z;
+		normalVector.z = vectorA.x * vectorB.y - vectorA.y * vectorB.x;
+
 		//normalize normalVector
 		float normalizeFactor = sqrtf(normalVector.x * normalVector.x + normalVector.y * normalVector.y + normalVector.z * normalVector.z);
 		normalVector.x /= normalizeFactor;
 		normalVector.x /= normalizeFactor;
 		normalVector.x /= normalizeFactor;
 
-		Vec3d lookVector = {
-			.x = translatedTriangle.p[0].x - cameraPosition.x,
-			.y = translatedTriangle.p[0].y - cameraPosition.y,
-			.z = translatedTriangle.p[0].z - cameraPosition.z
-		};
+		Vec3d lookVector;
+		lookVector.x = translatedTriangle.p[0].x - cameraPosition.x;
+		lookVector.y = translatedTriangle.p[0].y - cameraPosition.y;
+		lookVector.z = translatedTriangle.p[0].z - cameraPosition.z;
+
 		//normalize again
 		float normalizeFactor2 = sqrtf(lookVector.x * lookVector.x + lookVector.y * lookVector.y + lookVector.z * lookVector.z);
 		lookVector.x /= normalizeFactor2;
@@ -152,6 +254,14 @@ void Draw(SDL_Renderer* renderer) {
 			SDL_RenderDrawLine(renderer, projectedTriangle.p[0].x, projectedTriangle.p[0].y, projectedTriangle.p[1].x, projectedTriangle.p[1].y);
 			SDL_RenderDrawLine(renderer, projectedTriangle.p[1].x, projectedTriangle.p[1].y, projectedTriangle.p[2].x, projectedTriangle.p[2].y);
 			SDL_RenderDrawLine(renderer, projectedTriangle.p[2].x, projectedTriangle.p[2].y, projectedTriangle.p[0].x, projectedTriangle.p[0].y);
+
+			//FillTriangle(renderer, &projectedTriangle);
+			FillTriangle(
+				projectedTriangle.p[0].x, projectedTriangle.p[0].y,
+				projectedTriangle.p[1].x, projectedTriangle.p[1].y,
+				projectedTriangle.p[2].x, projectedTriangle.p[2].y,
+				renderer
+			);
 		}
 	}
 
@@ -168,6 +278,7 @@ void Exit() {
 }
 
 int main(void) {
+
 	if (SDL_Init(SDL_INIT_VIDEO) == 0) {
 		SDL_Window* window = NULL;
 		SDL_Renderer* renderer = NULL;
@@ -190,7 +301,8 @@ int main(void) {
 
 				Draw(renderer);
 
-				/* Example Code on how to draw
+				// Example Code on how to draw
+				/**
 				SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 				SDL_RenderClear(renderer);
 
