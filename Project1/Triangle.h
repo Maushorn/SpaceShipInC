@@ -4,22 +4,15 @@
 #include <SDL_render.h>
 #include <SDL_video.h>
 
-void swap(int32_t* x1, int32_t* x2) {
+inline void swap(int32_t* x1, int32_t* x2) {
 	int32_t tmp = *x1;
 	*x1 = *x2;
 	*x2 = tmp;
 }
-/*
-void swap(int* x1, int* x2) {
-	int tmp = *x1;
-	*x1 = *x2;
-	*x2 = tmp;
-}
-*/
 
-void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, SDL_Renderer* renderer)
+inline void FillTriangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2, int32_t x3, int32_t y3, SDL_Renderer* renderer)
 {
-	//auto drawline = (int sx, int ex, int ny)* { for (int i = sx; i <= ex; i++) SDL_RenderDrawPoint(renderer, i, ny); };
+	//auto drawline = [&](int sx, int ex, int ny)* { for (int i = sx; i <= ex; i++) SDL_RenderDrawPoint(renderer, i, ny); };
 
 	int t1x, t2x, y, minx, maxx, t1xp, t2xp;
 	int changed1 = 0;

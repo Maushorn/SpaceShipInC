@@ -141,7 +141,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Geometry.c" />
     <ClCompile Include="Game.c" />
   </ItemGroup>
   <ItemGroup>
