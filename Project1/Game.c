@@ -24,6 +24,8 @@ Mat4x4 matProj = { 0 };
 Mat4x4 matRotZ = { 0 };
 Mat4x4 matRotX = { 0 };
 Vec3d cameraPosition = { 0 };
+Vec3d lookDirection = { 0, 0, 1 };
+float Yaw = 0.0f;
 Vec3d directionalLight = { .x = 0.0, .y = 0.0, .z = 1.0, .w = 1.0 };
 
 Mesh* meshCube;
@@ -46,12 +48,13 @@ int SortTriangles(Triangle t1, Triangle t2) {
 
 void LoadMeshFromFile() {
 	FILE* file;
+	//TODO Improve performance with teapot
 	fopen_s(&file, "SpaceShip.obj", "r");
 	char buffer[64];
 	Triangle triangleBuffer[128];
-	float vertexBuffer[64][3];
+	float vertexBuffer[4000][3];
 	int vertexCount = 0;
-	int faceBuffer[128][3];
+	int faceBuffer[8000][3];
 	int faceCount = 0;
 
 
@@ -155,6 +158,28 @@ void Load(void) {
 void Update(int delta) {
 	fTheta += 0.001f * (float)delta;
 
+	const Uint8* state = SDL_GetKeyboardState(NULL);
+	Vec3d forward = Vector_Mul(lookDirection, delta * 0.01f);
+
+	//Controls
+	if (state[SDL_SCANCODE_W]) {
+		cameraPosition = Vector_AddVector(cameraPosition, forward);
+	}
+	if (state[SDL_SCANCODE_S]) {
+		cameraPosition = Vector_SubVector(cameraPosition, forward);
+	}
+	if (state[SDL_SCANCODE_E]) {
+		cameraPosition.y -= 0.1f;
+	}
+	if (state[SDL_SCANCODE_Q]) {
+		cameraPosition.y += 0.1f;
+	}
+	if (state[SDL_SCANCODE_A]) {
+		Yaw -= delta * 0.001f;
+	}if (state[SDL_SCANCODE_D]) {
+		Yaw += delta * 0.001f;
+	}
+
 	//Set z-Rotation Matrix
 	RotationMatrixZ(&matRotZ, fTheta);
 
@@ -169,9 +194,21 @@ void Draw(SDL_Renderer* renderer) {
 	SDL_RenderClear(renderer);
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 
-	Triangle triangles[512] = { 0 };
+	Triangle triangles[8000] = { 0 };
 	int triangleCount = 0;
 	Mat4x4 worldMatrix = Matrix_MultiplyMatrix(matRotX, matRotZ);
+
+
+	Vec3d up = { 0, 1 ,0 };
+	//Vec3d target = Vector_AddVector(cameraPosition, lookDirection);
+	Vec3d target = { 0, 0, 1 };
+	Mat4x4 rotationMatrix = { 0 };
+	RotationMatrixY(&rotationMatrix, Yaw);
+	Matrix_MultiplyVector(&target, &lookDirection, &rotationMatrix);
+	target = Vector_AddVector(cameraPosition, lookDirection);
+
+	Mat4x4 cameraMatrix = Matrix_PointAt(&cameraPosition, &target, &up);
+	Mat4x4 viewMatrix = Matrix_QuickInverse(&cameraMatrix);
 
 	for (size_t i = 0; i < meshCube->trisCount; i++)
 	{
@@ -214,9 +251,14 @@ void Draw(SDL_Renderer* renderer) {
 			) * 255.0f;
 		SDL_SetRenderDrawColor(renderer, light, light, light, SDL_ALPHA_OPAQUE);
 
+		//Convert World Space to View Space
+		Triangle viewTriangle;
+		Matrix_MultiplyTriangle(&(triangles[i]), &viewTriangle, &viewMatrix);
+
+
 		//Project Triangle - Projection Space
 		Triangle projectedTriangle;
-		Matrix_MultiplyTriangle(&(triangles[i]), &projectedTriangle, &matProj);
+		Matrix_MultiplyTriangle(&viewTriangle, &projectedTriangle, &matProj);
 
 		//Normalize Coordinates
 		for (size_t i = 0; i < 3; i++)

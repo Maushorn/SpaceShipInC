@@ -84,6 +84,15 @@ Vec3d Vector_Div(Vec3d v, float x) {
 	return newVec;
 }
 
+Vec3d Vector_Mul(Vec3d v, float x) {
+	Vec3d newVec;
+	newVec.x = v.x * x;
+	newVec.y = v.y * x;
+	newVec.z = v.z * x;
+	newVec.w = v.w * x;
+	return newVec;
+}
+
 void Matrix_MultiplyVector(Vec3d* i, Vec3d* o, Mat4x4* m) {
 	o->x = i->x * m->m[0][0] + i->y * m->m[1][0] + i->z * m->m[2][0] + m->m[3][0];
 	o->y = i->x * m->m[0][1] + i->y * m->m[1][1] + i->z * m->m[2][1] + m->m[3][1];
@@ -164,4 +173,60 @@ inline void NormalizeVector(Vec3d* v) {
 	v->x /= normalizeFactor;
 	v->y /= normalizeFactor;
 	v->z /= normalizeFactor;
+}
+
+float Vector_DotProduct(Vec3d* v1, Vec3d* v2) {
+	return (v1->x * v2->x + v1->y * v2->y + v1->z * v2->z);
+}
+
+Vec3d Vector_CrossProduct(Vec3d* v1, Vec3d* v2) {
+	Vec3d newVector = {
+		.x = v1->y * v2->z - v1->z * v2->y,
+		.y = v1->z * v2->x - v1->x * v2->z,
+		.z = v1->x * v2->y - v1->y * v2->x,
+		.w = 1
+	};
+
+	return newVector;
+}
+
+Mat4x4 Matrix_PointAt(Vec3d* pos, Vec3d* target, Vec3d* up) {
+	//Calculate new forward direction
+	Vec3d newForward = Vector_SubVector(*target, *pos);
+	NormalizeVector(&newForward);
+
+	//Calculate new up
+	Vec3d a = Vector_Mul(newForward, Vector_DotProduct(up, &newForward));
+	Vec3d newUp = Vector_SubVector(*up, a);
+	NormalizeVector(&newUp);
+
+	//Calculate new Right
+	Vec3d newRight = Vector_CrossProduct(&newUp, &newForward);
+
+	Mat4x4 m = { .m = {
+		{newRight.x, newRight.y, newRight.z, 0},
+		{newUp.x, newUp.y ,newUp.z, 0},
+		{newForward.x ,newForward.y ,newForward.z ,0},
+		{pos->x, pos->y, pos->z, 1}
+		}
+	};
+	return m;
+}
+
+
+Mat4x4 Matrix_QuickInverse(Mat4x4* m) {
+	Mat4x4 newMatrix = {
+		.m = {
+			{m->m[0][0],m->m[1][0],m->m[2][0], 0},
+			{m->m[0][1],m->m[1][1],m->m[2][1], 0},
+			{m->m[0][2],m->m[1][2],m->m[2][2], 0},
+			{
+				-(m->m[3][0] * m->m[0][0] + m->m[3][1] * m->m[0][1] + m->m[3][2] * m->m[0][2]),
+				-(m->m[3][0] * m->m[1][0] + m->m[3][1] * m->m[1][1] + m->m[3][2] * m->m[1][2]),
+				-(m->m[3][0] * m->m[2][0] + m->m[3][1] * m->m[2][1] + m->m[3][2] * m->m[2][2]),
+				1
+			}
+		}
+	};
+	return newMatrix;
 }
