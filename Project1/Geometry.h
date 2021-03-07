@@ -29,6 +29,18 @@ typedef struct {
 	float m[4][4];
 }Mat4x4;
 
+Triangle GetDefaultTriangle() {
+	Triangle t;
+	for (size_t i = 0; i < 3; i++)
+	{
+		t.p[i].x = 0.0f;
+		t.p[i].y = 0.0f;
+		t.p[i].z = 0.0f;
+		t.p[i].w = 1.0f;
+	}
+	return t;
+}
+
 Mesh* GetExampleMeshCube() {
 
 	Mesh* meshCube = malloc(sizeof(Mesh));
@@ -101,9 +113,9 @@ void Matrix_MultiplyVector(Vec3d* i, Vec3d* o, Mat4x4* m) {
 }
 
 void Matrix_MultiplyTriangle(Triangle* i, Triangle* o, Mat4x4* m) {
-	Matrix_MultiplyVector(&(i->p[0]), &(o->p[0]), m);
-	Matrix_MultiplyVector(&(i->p[1]), &(o->p[1]), m);
-	Matrix_MultiplyVector(&(i->p[2]), &(o->p[2]), m);
+	Matrix_MultiplyVector(&i->p[0], &o->p[0], m);
+	Matrix_MultiplyVector(&i->p[1], &o->p[1], m);
+	Matrix_MultiplyVector(&i->p[2], &o->p[2], m);
 }
 
 Mat4x4 Matrix_MultiplyMatrix(Mat4x4 m1, Mat4x4 m2) {
@@ -229,4 +241,77 @@ Mat4x4 Matrix_QuickInverse(Mat4x4* m) {
 		}
 	};
 	return newMatrix;
+}
+
+//Function returns a Vector if a line crosses the plane
+Vec3d Vector_IntersectPlane(Vec3d* plane_p, Vec3d* plane_n, Vec3d* lineStart, Vec3d* lineEnd) {
+	NormalizeVector(plane_n);
+	float plane_d = -Vector_DotProduct(plane_n, plane_p);
+	float ad = Vector_DotProduct(lineStart, plane_n);
+	float bd = Vector_DotProduct(lineEnd, plane_n);
+	float t = (-plane_d - ad) / (bd - ad);
+	Vec3d lineStartToEnd = Vector_SubVector(*lineEnd, *lineStart);
+	Vec3d lineToIntersect = Vector_Mul(lineStartToEnd, t);
+	return Vector_AddVector(*lineStart, lineToIntersect);
+}
+
+//Calculate the distance between a point an a plane.
+inline float Vector_PlaneDistance(Vec3d* p, Vec3d* plane_point, Vec3d* plane_normal) {
+	return Vector_DotProduct(plane_normal, p) - Vector_DotProduct(plane_normal, plane_point);
+}
+
+//Returns amount of resulting triangles.
+int Triangle_ClipAgainstPlane(Vec3d* plane_p, Vec3d* plane_n, Triangle* in_tri, Triangle* out_tri1, Triangle* out_tri2) {
+	//Make sure plane normal is normalized
+	NormalizeVector(plane_n);
+
+	Vec3d* insidePoints[3]; int insidePointCount = 0;
+	Vec3d* outsidePoints[3]; int outsidePointCount = 0;
+
+	//Get signed distance of each point in triangle to plane
+	float d0 = Vector_PlaneDistance(&in_tri->p[0], plane_p, plane_n);
+	float d1 = Vector_PlaneDistance(&in_tri->p[1], plane_p, plane_n);
+	float d2 = Vector_PlaneDistance(&in_tri->p[2], plane_p, plane_n);
+
+	if (d0 >= 0) { insidePoints[insidePointCount++] = &in_tri->p[0]; }
+	else outsidePoints[outsidePointCount++] = &in_tri->p[0];
+	if (d1 >= 0) { insidePoints[insidePointCount++] = &in_tri->p[1]; }
+	else outsidePoints[outsidePointCount++] = &in_tri->p[1];
+	if (d2 >= 0) { insidePoints[insidePointCount++] = &in_tri->p[2]; }
+	else outsidePoints[outsidePointCount++] = &in_tri->p[2];
+
+	if (insidePointCount == 0) {
+		//All points are outside the plane.
+		return 0;
+	}
+	if (insidePointCount == 3) {
+		//All points are inside the plane.
+		*out_tri1 = *in_tri;
+		return 1;
+	}
+	if (insidePointCount == 1 && outsidePointCount == 2) {
+		//Ther inside point is valid, so we keep that
+		out_tri1->p[0] = *insidePoints[0];
+		//But the two new points are at the locations where the original triangle intersects with the plane.
+		out_tri1->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]);
+		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[1]);
+		return 1;
+	}
+	if (insidePointCount == 2 && outsidePointCount == 1) {
+
+		out_tri1->p[0] = *insidePoints[0];
+		out_tri1->p[1] = *insidePoints[1];
+		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]);
+		/*
+		out_tri2->p[0] = *insidePoints[1];
+		out_tri2->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]);
+		out_tri2->p[2] = out_tri1->p[2];
+		*/
+		out_tri2->p[0] = *insidePoints[1];
+		out_tri2->p[1] = out_tri1->p[2];
+		out_tri2->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]);
+
+		return 2;
+	}
+	return 0;
 }
