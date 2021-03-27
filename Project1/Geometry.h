@@ -9,7 +9,7 @@ typedef struct {
 } Vec3d;
 
 typedef struct {
-	float x, y;
+	float u, v;
 } Vec2d;
 
 typedef struct {
@@ -18,6 +18,7 @@ typedef struct {
 
 typedef struct {
 	Vec3d p[3];
+	Vec2d t[3];
 } Triangle;
 
 typedef struct {
@@ -28,6 +29,10 @@ typedef struct {
 typedef struct {
 	float m[4][4];
 }Mat4x4;
+
+typedef struct {
+	Vec3d color[];
+}SVGSprite;
 
 Triangle GetDefaultTriangle() {
 	Triangle t;
@@ -47,23 +52,23 @@ Mesh* GetExampleMeshCube() {
 
 	Triangle triangles[] = {
 		//South
-		{ { { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f } } },
-		{ { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } } },
+		{.p = { { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 0.0f } }, .t = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } } },
+		{.p = { { 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } }, .t = { { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } } },
 		//East
-		{ { { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } } },
-		{ { { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f } } },
+		{.p = { { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f } }, .t = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } }  },
+		{.p = { { 1.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 0.0f, 1.0f } }, .t = { { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } }  },
 		//North
-		{ { { 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 1.0f } } },
-		{ { { 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } } },
+		{.p = { { 1.0f, 0.0f, 1.0f }, { 1.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 1.0f } }, .t = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } }  },
+		{.p = { { 1.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } }, .t = { { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } }  },
 		//West
-		{ { { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f } } },
-		{ { { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } } },
+		{.p = { { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f } }, .t = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } }  },
+		{.p = { { 0.0f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 0.0f } }, .t = { { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } }  },
 		//Top
-		{ { { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } } },
-		{ { { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 0.0f } } },
+		{.p = { { 0.0f, 1.0f, 0.0f }, { 0.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 1.0f } }, .t = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } }  },
+		{.p = { { 0.0f, 1.0f, 0.0f }, { 1.0f, 1.0f, 1.0f }, { 1.0f, 1.0f, 0.0f } }, .t = { { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } }  },
 		//Bottom
-		{ { { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } } },
-		{ { { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 1.0f } } }
+		{.p = { { 0.0f, 0.0f, 1.0f }, { 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } }, .t = { { 0.0f, 1.0f }, { 0.0f, 0.0f }, { 1.0f, 0.0f } }  },
+		{.p = { { 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 1.0f } }, .t = { { 0.0f, 1.0f }, { 1.0f, 0.0f }, { 1.0f, 1.0f } }  }
 	};
 	meshCube->trisCount = sizeof(triangles) / sizeof(Triangle);
 	Triangle* trianglesPtr = calloc(meshCube->trisCount, sizeof(Triangle));
@@ -244,14 +249,14 @@ Mat4x4 Matrix_QuickInverse(Mat4x4* m) {
 }
 
 //Function returns a Vector if a line crosses the plane
-Vec3d Vector_IntersectPlane(Vec3d* plane_p, Vec3d* plane_n, Vec3d* lineStart, Vec3d* lineEnd) {
+Vec3d Vector_IntersectPlane(Vec3d* plane_p, Vec3d* plane_n, Vec3d* lineStart, Vec3d* lineEnd, float* t) {
 	NormalizeVector(plane_n);
 	float plane_d = -Vector_DotProduct(plane_n, plane_p);
 	float ad = Vector_DotProduct(lineStart, plane_n);
 	float bd = Vector_DotProduct(lineEnd, plane_n);
-	float t = (-plane_d - ad) / (bd - ad);
+	*t = (-plane_d - ad) / (bd - ad);
 	Vec3d lineStartToEnd = Vector_SubVector(*lineEnd, *lineStart);
-	Vec3d lineToIntersect = Vector_Mul(lineStartToEnd, t);
+	Vec3d lineToIntersect = Vector_Mul(lineStartToEnd, *t);
 	return Vector_AddVector(*lineStart, lineToIntersect);
 }
 
@@ -268,17 +273,32 @@ int Triangle_ClipAgainstPlane(Vec3d* plane_p, Vec3d* plane_n, Triangle* in_tri, 
 	Vec3d* insidePoints[3]; int insidePointCount = 0;
 	Vec3d* outsidePoints[3]; int outsidePointCount = 0;
 
+	Vec2d* insideTextures[3]; int insideTextureCount = 0;
+	Vec2d* outsideTextures[3]; int outsideTextureCount = 0;
+
 	//Get signed distance of each point in triangle to plane
 	float d0 = Vector_PlaneDistance(&in_tri->p[0], plane_p, plane_n);
 	float d1 = Vector_PlaneDistance(&in_tri->p[1], plane_p, plane_n);
 	float d2 = Vector_PlaneDistance(&in_tri->p[2], plane_p, plane_n);
 
-	if (d0 >= 0) { insidePoints[insidePointCount++] = &in_tri->p[0]; }
-	else outsidePoints[outsidePointCount++] = &in_tri->p[0];
-	if (d1 >= 0) { insidePoints[insidePointCount++] = &in_tri->p[1]; }
-	else outsidePoints[outsidePointCount++] = &in_tri->p[1];
-	if (d2 >= 0) { insidePoints[insidePointCount++] = &in_tri->p[2]; }
-	else outsidePoints[outsidePointCount++] = &in_tri->p[2];
+	if (d0 >= 0) {
+		insidePoints[insidePointCount++] = &in_tri->p[0]; insideTextures[insideTextureCount++] = &in_tri->t[0];
+	}
+	else {
+		outsidePoints[outsidePointCount++] = &in_tri->p[0];  outsideTextures[outsideTextureCount++] = &in_tri->t[0];
+	}
+	if (d1 >= 0) {
+		insidePoints[insidePointCount++] = &in_tri->p[1]; insideTextures[insideTextureCount++] = &in_tri->t[1];
+	}
+	else {
+		outsidePoints[outsidePointCount++] = &in_tri->p[1]; outsideTextures[outsideTextureCount++] = &in_tri->t[1];
+	}
+	if (d2 >= 0) {
+		insidePoints[insidePointCount++] = &in_tri->p[2]; insideTextures[insideTextureCount++] = &in_tri->t[2];
+	}
+	else {
+		outsidePoints[outsidePointCount++] = &in_tri->p[2]; outsideTextures[outsideTextureCount++] = &in_tri->t[2];
+	}
 
 	if (insidePointCount == 0) {
 		//All points are outside the plane.
@@ -289,29 +309,57 @@ int Triangle_ClipAgainstPlane(Vec3d* plane_p, Vec3d* plane_n, Triangle* in_tri, 
 		*out_tri1 = *in_tri;
 		return 1;
 	}
+
+	float t;
+	float* tPtr = &t;
 	if (insidePointCount == 1 && outsidePointCount == 2) {
 		//Ther inside point is valid, so we keep that
 		out_tri1->p[0] = *insidePoints[0];
+		out_tri1->t[0] = *insideTextures[0];
 		//But the two new points are at the locations where the original triangle intersects with the plane.
-		out_tri1->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]);
-		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[1]);
+		out_tri1->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0], tPtr);
+		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[1], tPtr);
+		//Apply this to texture coordinates as well
+		out_tri1->t[1].u = t * (outsideTextures[0]->u - insideTextures[0]->u) + insideTextures[0]->u;
+		out_tri1->t[1].v = t * (outsideTextures[0]->v - insideTextures[0]->v) + insideTextures[0]->v;
+		out_tri1->t[2].u = t * (outsideTextures[1]->u - insideTextures[0]->u) + insideTextures[0]->u;
+		out_tri1->t[2].v = t * (outsideTextures[1]->v - insideTextures[0]->v) + insideTextures[0]->v;
 		return 1;
 	}
 	if (insidePointCount == 2 && outsidePointCount == 1) {
 
+		//Calculate first new triangle
 		out_tri1->p[0] = *insidePoints[0];
 		out_tri1->p[1] = *insidePoints[1];
-		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]);
-		/*
+		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0], tPtr);
+		//Apply this to texture
+		out_tri1->t[0] = *insideTextures[0];
+		out_tri1->t[1] = *insideTextures[1];
+		out_tri1->t[2].u = t * (outsideTextures[0]->u - insideTextures[0]->u) + insideTextures[0]->u;
+		out_tri1->t[2].v = t * (outsideTextures[0]->v - insideTextures[0]->v) + insideTextures[0]->v;
+
+		//Calculate second new triangle
 		out_tri2->p[0] = *insidePoints[1];
-		out_tri2->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]);
+		out_tri2->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0], tPtr);
 		out_tri2->p[2] = out_tri1->p[2];
-		*/
-		out_tri2->p[0] = *insidePoints[1];
-		out_tri2->p[1] = out_tri1->p[2];
-		out_tri2->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]);
+		//Apply this to texture
+		out_tri2->t[0] = *insideTextures[1];
+		out_tri2->t[1].u = t * (outsideTextures[0]->u - insideTextures[1]->u) + insideTextures[1]->u;
+		out_tri2->t[1].v = t * (outsideTextures[0]->v - insideTextures[1]->v) + insideTextures[1]->v;
+		out_tri2->t[2] = out_tri1->t[2];
+
+
 
 		return 2;
 	}
 	return 0;
+}
+
+void TexturedTriangle(
+	int x1, int y1, float u1, float v1,
+	int x2, int y2, float u2, float v2,
+	int x3, int y3, float u3, float v3,
+	SVGSprite* tex
+) {
+
 }
