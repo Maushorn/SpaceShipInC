@@ -170,10 +170,10 @@ void Update(int delta) {
 		cameraPosition = Vector_SubVector(cameraPosition, forward);
 	}
 	if (state[SDL_SCANCODE_E]) {
-		cameraPosition.y -= 0.1f;
+		cameraPosition.y -= 0.02f;
 	}
 	if (state[SDL_SCANCODE_Q]) {
-		cameraPosition.y += 0.1f;
+		cameraPosition.y += 0.02f;
 	}
 	if (state[SDL_SCANCODE_A]) {
 		Yaw -= delta * 0.001f;
@@ -251,7 +251,6 @@ void Draw(SDL_Renderer* renderer) {
 			normalVector.z * directionalLight.z
 			) * 255.0f;
 		if (light < 50) light = 50;
-		SDL_SetRenderDrawColor(renderer, light, light, light, SDL_ALPHA_OPAQUE);
 
 		//Convert World Space to View Space
 		Triangle viewTriangle = GetDefaultTriangle();
@@ -262,7 +261,7 @@ void Draw(SDL_Renderer* renderer) {
 		Triangle clippedTriangles[2];
 		clippedTriangles[0] = GetDefaultTriangle();
 		clippedTriangles[1] = GetDefaultTriangle();
-		Vec3d plane_p = { .x = 0.0f, .y = 0.0f, .z = 3.0f, .w = 1.0f };
+		Vec3d plane_p = { .x = 0.0f, .y = 0.0f, .z = 2.0f, .w = 1.0f };
 		Vec3d plane_n = { .x = 0.0f, .y = 0.0f, .z = 1.0f, .w = 1.0f };
 		clippedTriangleCount = Triangle_ClipAgainstPlane(&plane_p, &plane_n, &viewTriangle, &clippedTriangles[0], &clippedTriangles[1]);
 
@@ -292,23 +291,145 @@ void Draw(SDL_Renderer* renderer) {
 			projectedTriangle.p[2].x *= (0.5f * (float)width);
 			projectedTriangle.p[2].y *= (0.5f * (float)height);
 
-			//FillTriangle(renderer, &projectedTriangle);
-			FillTriangle(
-				projectedTriangle.p[0].x, projectedTriangle.p[0].y,
-				projectedTriangle.p[1].x, projectedTriangle.p[1].y,
-				projectedTriangle.p[2].x, projectedTriangle.p[2].y,
-				renderer
-			);
 
 
 
 
-			//Draw Triangles
-			SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
-			SDL_RenderDrawLine(renderer, projectedTriangle.p[0].x, projectedTriangle.p[0].y, projectedTriangle.p[1].x, projectedTriangle.p[1].y);
-			SDL_RenderDrawLine(renderer, projectedTriangle.p[1].x, projectedTriangle.p[1].y, projectedTriangle.p[2].x, projectedTriangle.p[2].y);
-			SDL_RenderDrawLine(renderer, projectedTriangle.p[2].x, projectedTriangle.p[2].y, projectedTriangle.p[0].x, projectedTriangle.p[0].y);
-			SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+
+			//Clip viewed Triangle against edge of screen.
+			Triangle clippedTrianglesToDraw[64] = { 0 };
+			int clippedTrianglesToDrawCount = 0;
+
+			//upper border
+			Vec3d edgePlane0_p = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+			Vec3d edgePlane0_n = { .x = 0.0f, .y = 1.0f, .z = 0.0f, .w = 1.0f };
+			//lower border
+			Vec3d edgePlane1_p = { .x = 0.0f, .y = (float)height - 1.0f, .z = 0.0f, .w = 1.0f };
+			Vec3d edgePlane1_n = { .x = 0.0f, .y = -1.0f, .z = 0.0f, .w = 1.0f };
+			//left border
+			Vec3d edgePlane2_p = { .x = 0.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+			Vec3d edgePlane2_n = { .x = 1.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+			//right border
+			Vec3d edgePlane3_p = { .x = (float)width - 1.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+			Vec3d edgePlane3_n = { .x = -1.0f, .y = 0.0f, .z = 0.0f, .w = 1.0f };
+
+			Triangle trianglesToClip[64] = { 0 };
+			trianglesToClip[0] = projectedTriangle;
+			int trianglesToClipCount = 1;
+			Triangle clipGroup[64] = { 0 };
+
+			Triangle clipped[2] = { 0 };
+			int clipGroupCount = 0;
+
+
+
+			for (size_t p = 0; p < 4; p++)
+			{
+				clipGroupCount = 0;
+
+				for (size_t q = 0; q < trianglesToClipCount; q++)
+				{
+
+
+					int localClippedCount = 0;
+					int allClippedCount = 0;
+					Triangle allLocalClippedEdgeTriangles[64];
+
+					switch (p) {
+					case 0:
+						localClippedCount = Triangle_ClipAgainstPlane(
+							&edgePlane0_p,
+							&edgePlane0_n,
+							&trianglesToClip[q],
+							&clipped[0],
+							&clipped[1]
+						);
+						break;
+					case 1:
+						localClippedCount = Triangle_ClipAgainstPlane(
+							&edgePlane1_p,
+							&edgePlane1_n,
+							&trianglesToClip[q],
+							&clipped[0],
+							&clipped[1]
+						);
+						break;
+					case 2:
+						localClippedCount = Triangle_ClipAgainstPlane(
+							&edgePlane2_p,
+							&edgePlane2_n,
+							&trianglesToClip[q],
+							&clipped[0],
+							&clipped[1]
+						);
+						break;
+					case 3:
+						localClippedCount = Triangle_ClipAgainstPlane(
+							&edgePlane3_p,
+							&edgePlane3_n,
+							&trianglesToClip[q],
+							&clipped[0],
+							&clipped[1]
+						);
+						break;
+					}
+
+					for (size_t i = 0; i < localClippedCount; i++)
+					{
+						clipGroup[clipGroupCount] = clipped[i];
+						clipGroupCount++;
+
+					}
+				}
+
+				for (size_t q = 0; q < clipGroupCount; q++)
+				{
+
+					if (p < 3) {
+						trianglesToClip[q] = clipGroup[q];
+					}
+					else { //Draw after all 4 planes where clipped against
+						//FillTriangle(renderer, &projectedTriangle);
+						SDL_SetRenderDrawColor(renderer, light, light, light, SDL_ALPHA_OPAQUE);
+						FillTriangle(
+							clipGroup[q].p[0].x, clipGroup[q].p[0].y,
+							clipGroup[q].p[1].x, clipGroup[q].p[1].y,
+							clipGroup[q].p[2].x, clipGroup[q].p[2].y,
+							renderer
+						);
+						//Draw Triangles
+						SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+						SDL_RenderDrawLine(renderer, clipGroup[q].p[0].x, clipGroup[q].p[0].y, clipGroup[q].p[1].x, clipGroup[q].p[1].y);
+						SDL_RenderDrawLine(renderer, clipGroup[q].p[1].x, clipGroup[q].p[1].y, clipGroup[q].p[2].x, clipGroup[q].p[2].y);
+						SDL_RenderDrawLine(renderer, clipGroup[q].p[2].x, clipGroup[q].p[2].y, clipGroup[q].p[0].x, clipGroup[q].p[0].y);
+						SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+					}
+				}
+				trianglesToClipCount = clipGroupCount;
+
+
+
+
+				//FillTriangle(renderer, &projectedTriangle);
+				/*
+				SDL_SetRenderDrawColor(renderer, light, light, light, SDL_ALPHA_OPAQUE);
+				FillTriangle(
+					projectedTriangle.p[0].x, projectedTriangle.p[0].y,
+					projectedTriangle.p[1].x, projectedTriangle.p[1].y,
+					projectedTriangle.p[2].x, projectedTriangle.p[2].y,
+					renderer
+				);
+				*/
+
+				//Draw Triangles
+				/*
+				SDL_SetRenderDrawColor(renderer, 255, 0, 0, SDL_ALPHA_OPAQUE);
+				SDL_RenderDrawLine(renderer, projectedTriangle.p[0].x, projectedTriangle.p[0].y, projectedTriangle.p[1].x, projectedTriangle.p[1].y);
+				SDL_RenderDrawLine(renderer, projectedTriangle.p[1].x, projectedTriangle.p[1].y, projectedTriangle.p[2].x, projectedTriangle.p[2].y);
+				SDL_RenderDrawLine(renderer, projectedTriangle.p[2].x, projectedTriangle.p[2].y, projectedTriangle.p[0].x, projectedTriangle.p[0].y);
+				SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+				*/
+			}
 
 		}
 	}

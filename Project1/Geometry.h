@@ -302,15 +302,15 @@ int Triangle_ClipAgainstPlane(Vec3d* plane_p, Vec3d* plane_n, Triangle* in_tri, 
 		out_tri1->p[0] = *insidePoints[0];
 		out_tri1->p[1] = *insidePoints[1];
 		out_tri1->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[0], outsidePoints[0]);
-		/*
+
 		out_tri2->p[0] = *insidePoints[1];
 		out_tri2->p[1] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]);
 		out_tri2->p[2] = out_tri1->p[2];
-		*/
+		/*
 		out_tri2->p[0] = *insidePoints[1];
 		out_tri2->p[1] = out_tri1->p[2];
 		out_tri2->p[2] = Vector_IntersectPlane(plane_p, plane_n, insidePoints[1], outsidePoints[0]);
-
+		*/
 		return 2;
 	}
 	return 0;
